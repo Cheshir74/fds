@@ -1,12 +1,12 @@
 upstream mysite {
-  server unix:///home/deployer/mina-deploy-example/shared/tmp/sockets/puma.sock fail_timeout=0;
+  server unix:///home/depus/app_deploy/shared/tmp/sockets/puma.sock fail_timeout=0;
 }
 
 server {
   listen 80;
   listen [::]:80;
 
-  root /home/deployer/mina-deploy-example/current/public;
+  root /home/depus/app_deploy/current/public;
 
   location ~ ^/assets/ {
       expires max;
@@ -31,7 +31,7 @@ server {
   }
 
   location ~ ^/(500|404|422).html {
-      root /home/deployer/mina-deploy-example/current/public;
+      root /home/depus/app_deploy/current/public;
   }
 
   error_page 500 502 503 504 /500.html;

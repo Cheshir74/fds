@@ -1,6 +1,6 @@
-#To make an image from this:  docker build -t [image name] .
+#To make an image from this:  docker build -t [image name] -f [Dockerfile name] .
 #On host, ufw allow [some other port than 22]
-#Run container:  docker run --rm [image_name] -p [other port from above]:22
+#Run container:  docker run --rm [image_name] -p [other port from above]:22 -p [other port from above]:80
 FROM ubuntu:18.04
 LABEL maintainer="your_email"
 ENV RUBY_V 2.6.5
@@ -29,10 +29,10 @@ RUN apt install -y git
 
 #install ruby and other packages
 
-RUN apt install -y curl
+RUN apt install -y curl sudo
 RUN apt install -y autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm5 libgdbm-dev nano vim libsqlite3-dev
 RUN ["/bin/bash", "-c", "curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -"]
-RUN ["/bin/bash", "-c", "echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list"]
+RUN ["/bin/bash", "-c", "echo 'deb https://dl.yarnpkg.com/debian/ stable main' | sudo tee /etc/apt/sources.list.d/yarn.list"]
 RUN ["/bin/bash", "-c", "curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh"]
 RUN ["/bin/bash", "-c", "bash nodesource_setup.sh"]
 RUN apt update

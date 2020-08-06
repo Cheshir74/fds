@@ -1,6 +1,6 @@
 #To make an image from this:  docker build -t [image name] -f [Dockerfile name] .
 #On host, ufw allow [some other port than 22]
-#Run container:  docker run --rm [image_name] -p [other port from above]:22 -p [other port from above]:80
+#Run container:  docker run -d -it -p [other port from above]:22 -p [other port from above]:80 [image_name]
 FROM ubuntu:18.04
 LABEL maintainer="your_email"
 ENV RUBY_V 2.6.5

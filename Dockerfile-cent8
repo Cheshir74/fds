@@ -1,7 +1,7 @@
 #To make an image from this:  docker build -t [image name] -f [Dockerfile name] .
 #On host, ufw allow [some other port than 22]
 #Run container:  docker run -d -it -p [other port from above]:22 -p [other port from above]:80 [image_name]
-FROM ubuntu:18.04
+FROM centos:8
 LABEL maintainer="your_email"
 ENV RUBY_V 2.6.5
 ENV USER your_username
@@ -10,33 +10,35 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV APP=app_deploy
 
 #install openssh server
-RUN apt update && apt install -y openssh-server
-RUN mkdir /var/run/sshd
+RUN dnf update -y&& dnf install openssh-server -y
+RUN systemctl start sshd
+RUN systemctl enable sshd
+RUN firewall-cmd --zone=public --permanent --add-service=ssh
+RUN firewall-cmd --reload
+#RUN mkdir /var/run/sshd
  
 #add a user
 RUN useradd -ms /bin/bash 'depus'
+RUN usermod -aG wheel depus
 
 #give her sudo privileges
 RUN adduser $USER sudo
 RUN echo $USER:$PASS | chpasswd
 
-
-
-
 #install git
 
-RUN apt install -y git
+RUN dnf install git -y
 
 #install ruby and other packages
 
-RUN apt install -y curl sudo
-RUN apt install -y autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm5 libgdbm-dev nano vim libsqlite3-dev
-RUN ["/bin/bash", "-c", "curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -"]
-RUN ["/bin/bash", "-c", "echo 'deb https://dl.yarnpkg.com/debian/ stable main' | sudo tee /etc/apt/sources.list.d/yarn.list"]
-RUN ["/bin/bash", "-c", "curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh"]
-RUN ["/bin/bash", "-c", "bash nodesource_setup.sh"]
-RUN apt update
-RUN apt install -y yarn nodejs
+RUN dnf install curl gnupg2 tar -y
+RUN dnf install -y zlib zlib-devel gcc-c++ patch readline readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 autoconf automake libtool bison curl sqlite-devel gdbm-devel ncurses-devel nano openssl-devel wget
+
+RUN "/bin/bash", "-c", "curl -sL https://rpm.nodesource.com/setup_12.x | bash -"]
+RUN dnf install -y nodejs
+RUN "/bin/bash", "-c", "curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo"]
+RUN dnf install -y yarn
+
 USER depus
 
 RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv
@@ -56,24 +58,32 @@ RUN /bin/bash -c '$HOME/.rbenv/versions/$RUBY_V/bin/gem env home'
 RUN /bin/bash -c '$HOME/.rbenv/versions/$RUBY_V/bin/gem install rails'
 RUN /bin/bash -c '$HOME/.rbenv/bin/rbenv rehash'
 
-
 USER root
 
-RUN apt install -y nginx supervisor
+
+RUN dnf -y install nginx supervisor
 RUN mkdir -p /var/log/supervisor && mkdir -p /etc/supervisor/conf.d
 ADD supervisor.conf /etc/supervisor/supervisor.conf
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
+#passenger
+RUN "/bin/bash", "-c", "curl --fail -sSLo /etc/yum.repos.d/passenger.repo https://oss-binaries.phusionpassenger.com/yum/definitions/el-passenger.repo"]
+RUN "/bin/bash", "-c", "dnf install -y nginx-mod-http-passenger || yum-config-manager --enable cr && yum install -y nginx-mod-http-passenger"]
+
+
 RUN git clone https://github.com/Cheshir74/fds.git ~/fds
 RUN /bin/bash -c 'cp $HOME/fds/nginx-cap-default /etc/nginx/sites-available/default'
+RUN /bin/bash -c 'cp $HOME/fds/passenger.conf /etc/nginx/conf.d/mod-http-passenger.conf'
+
 RUN rm -rf $HOME/fds
+
+RUN systemctl restart nginx
+
 
 # Expose the SSH port
 EXPOSE 22 80
 
 CMD ["supervisord", "-c", "/etc/supervisor/supervisor.conf"]
-
-
 
 
 
